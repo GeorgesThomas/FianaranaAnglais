@@ -1,0 +1,1175 @@
+import { useState, useEffect, useRef } from "react";
+
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const data = {
+  phrases: [
+    { id: 1, phrase: "What do you mean by that?", use: "Manontany fanazavana amin'ny resaka rehetra", pronunciation: "/wɒt duː juː miːn baɪ ðæt/", day: 1 },
+    { id: 2, phrase: "I was just about to say that!", use: "Maneho fifanarahana miaraka amin'ny hafanam-po", pronunciation: "/aɪ wəz dʒʌst əˈbaʊt tə seɪ ðæt/", day: 1 },
+    { id: 3, phrase: "Could you say that again, slowly?", use: "Mangataka amim-pahamendrehana ny haverina ny teny", pronunciation: "/kʊd juː seɪ ðæt əˈɡen ˈsloʊli/", day: 1 },
+    { id: 4, phrase: "That makes total sense.", use: "Maneho fahatakarana na fankatoavana", pronunciation: "/ðæt meɪks ˈtoʊtəl sens/", day: 2 },
+    { id: 5, phrase: "I'm not sure I follow you.", use: "Milaza tsy fahatakarana — tsy manelingelina ny hafa", pronunciation: "/aɪm nɒt ʃʊər aɪ ˈfɒloʊ juː/", day: 2 },
+    { id: 6, phrase: "Let me think about that for a second.", use: "Maka fotoana kely mialoha ny mamaly", pronunciation: "/let miː θɪŋk əˈbaʊt ðæt fər ə ˈsekənd/", day: 2 },
+    { id: 7, phrase: "Honestly, I hadn't thought of it that way.", use: "Maneho fisokafan-tsaina amin'ny hevitra vaovao", pronunciation: "/ˈɒnɪstli aɪ ˈhædnt θɔːt əv ɪt ðæt weɪ/", day: 3 },
+    { id: 8, phrase: "That's a good point, but…", use: "Mifanohitra amim-pahamendrehana na manampy fanampin-kevitra", pronunciation: "/ðæts ə ɡʊd pɔɪnt bʌt/", day: 3 },
+    { id: 9, phrase: "I've been meaning to ask you…", use: "Manomboka fanontaniana nalain-dàlana ela", pronunciation: "/aɪv biːn ˈmiːnɪŋ tə ɑːsk juː/", day: 3 },
+    { id: 10, phrase: "It depends on what you mean.", use: "Mamaly amim-pahendrena, tsy hoe eny na tsia fotsiny", pronunciation: "/ɪt dɪˈpendz ɒn wɒt juː miːn/", day: 4 },
+    { id: 11, phrase: "Don't quote me on this, but…", use: "Mizara vaovao tsy azo antoka amim-pilaminana", pronunciation: "/doʊnt kwoʊt miː ɒn ðɪs bʌt/", day: 4 },
+    { id: 12, phrase: "I'll take your word for it.", use: "Matoky ny olona tsy mila porofo", pronunciation: "/aɪl teɪk jʊər wɜːrd fər ɪt/", day: 4 },
+    { id: 13, phrase: "Long story short…", use: "Mamarana tsy miditra amin'ny antsipirihany", pronunciation: "/lɒŋ ˈstɔːri ʃɔːrt/", day: 5 },
+    { id: 14, phrase: "What's the catch?", use: "Manontany raha misy zavatra miafina ratsy", pronunciation: "/wɒts ðə kætʃ/", day: 5 },
+    { id: 15, phrase: "I'm all ears.", use: "Milaza amin'ny olona fa vonona mihaino ianao", pronunciation: "/aɪm ɔːl ɪərz/", day: 5 },
+    { id: 16, phrase: "You're telling me…", use: "Maneho gaga na tsy finoana zavatra", pronunciation: "/jʊər ˈtelɪŋ miː/", day: 6 },
+    { id: 17, phrase: "We're on the same page.", use: "Manamarina fa mitovy ny fahatakarana", pronunciation: "/wɪər ɒn ðə seɪm peɪdʒ/", day: 6 },
+    { id: 18, phrase: "I'll get back to you on that.", use: "Mampanantena valiny any aoriana", pronunciation: "/aɪl ɡet bæk tə juː ɒn ðæt/", day: 6 },
+    { id: 19, phrase: "It's not a big deal.", use: "Mampihena olana mba hanafahana ny tsindry", pronunciation: "/ɪts nɒt ə bɪɡ diːl/", day: 7 },
+    { id: 20, phrase: "That's easier said than done.", use: "Milaza fa ny zavatra voalazy mora noho ny atao", pronunciation: "/ðæts ˈiːziər sed ðæn dʌn/", day: 7 },
+  ],
+  vocabulary: {
+    work: [
+      { word: "Delegate", meaning: "Manome asa ho an'ny hafa", example: "She learned to delegate instead of doing everything herself." },
+      { word: "Deadline", meaning: "Ny daty farany hamenona ny asa", example: "We pushed the deadline back by one week." },
+      { word: "Feedback", meaning: "Hevitra mba hanatsarana ny asa", example: "His feedback helped me revise the report." },
+      { word: "Pitch", meaning: "Fampisehoana fohy sy mahatoky", example: "She gave a brilliant pitch to the investors." },
+      { word: "Burnout", meaning: "Falahetana avy amin'ny asa be loatra", example: "He took a month off to recover from burnout." },
+    ],
+    social: [
+      { word: "Vibe", meaning: "Ny tsangan-kevitra na ny toe-tsaina amin'ny toerana/olona", example: "The café had a really cozy vibe." },
+      { word: "Catch up", meaning: "Miresaka rehefa ela tsy nihaona", example: "Let's catch up over coffee this weekend." },
+      { word: "Awkward", meaning: "Tsy mety na manahy ara-tsosialy", example: "There was an awkward silence after the joke." },
+      { word: "Ghost", meaning: "Nitsahatra tampoka ny fifandraisana rehetra", example: "He ghosted her after three dates." },
+      { word: "Overshare", meaning: "Milaza zavatra manokana be loatra", example: "She tends to overshare on first meetings." },
+    ],
+    travel: [
+      { word: "Layover", meaning: "Fijanonana eo anelanelan'ny sidina", example: "We had a 4-hour layover in Dubai." },
+      { word: "Itinerary", meaning: "Fandaharam-potoana na drafin-dalana", example: "The tour guide handed out the itinerary." },
+      { word: "Local", meaning: "Olona avy amin'ilay faritra", example: "A local recommended the best restaurant." },
+      { word: "Check-in", meaning: "Ny dingana fandraisan'ny hotely na seranam-piaramanidina", example: "Online check-in saves a lot of time." },
+      { word: "Jet lag", meaning: "Kilema avy amin'ny fihodinana ny faritra fotoana", example: "I slept all day because of jet lag." },
+    ],
+  },
+  grammar: [
+    {
+      point: "Present Perfect vs. Simple Past",
+      rule: "Ampiasao ny Present Perfect ho an'ny traikefa tsy misy fotoana voafaritra, ary ny Simple Past ho an'ny asa vita tamin'ny fotoana voafaritra.",
+      examples: [
+        "I have visited Paris. (traikefa, tsy fantatra ny fotoana) → I visited Paris in 2019. (fotoana voafaritra)",
+        "She has eaten sushi before. → She ate sushi last Tuesday.",
+        "Have you ever seen that film? → Did you see it yesterday?",
+      ],
+    },
+    {
+      point: "Conditionals: Tena mety vs. Tsy mety",
+      rule: "'If + present → will' ho an'ny toe-javatra tena mety. 'If + past → would' ho an'ny toe-javatra am-pijangajangana.",
+      examples: [
+        "If it rains tomorrow, I will stay home. (mety tena ho tonga)",
+        "If I were rich, I would travel the world. (am-pijangajangana/tsy tena izy)",
+        "If you study daily, you will improve fast. (fomba fanao tena izy)",
+      ],
+    },
+    {
+      point: "Articles: A, An, The",
+      rule: "Ampiasao ny 'a/an' amin'ny voalohany na tsy voafaritra. Ampiasao ny 'the' amin'ny voafaritra na efa voateny.",
+      examples: [
+        "I saw a dog in the park. The dog was chasing a cat.",
+        "She needs an umbrella. (zangidy rehetra) → She forgot the umbrella at home. (ilay iray manokana)",
+        "He is a doctor. → The doctor you met is my friend.",
+      ],
+    },
+    {
+      point: "Phrasal Verbs",
+      rule: "Ny phrasal verbs dia manampy heviny vaovao ny matoanteny + preposition. Manome feo voajanahary amin'ny resaka.",
+      examples: [
+        "I need to figure out this problem. (hahazo vahaolana / mahafantatra)",
+        "Don't give up — you're almost there! (tsy mitsahatra / manohitra)",
+        "She brought up an interesting topic at dinner. (niresaka / nilaza)",
+      ],
+    },
+    {
+      point: "Modals ho an'ny Fahamendrehana",
+      rule: "Ampiasao ny 'could', 'would', 'might' fa tsy 'can', 'will', 'may' mba hanehoana fahamendrehana sy voajanahary.",
+      examples: [
+        "Could you help me? (mendrika kokoa noho ny 'Can you help me?')",
+        "Would you mind closing the window? (fangatahana mendrika indrindra)",
+        "I might be late — don't wait for me. (mety ho tonga, tsy voatery)",
+      ],
+    },
+  ],
+  speakingScript: `Hey! Okay, so — I want to tell you about something kind of funny that happened to me this week.
+
+So, long story short, I was supposed to meet a friend for coffee — we were going to catch up after like two months — and I totally mixed up the time. I thought it was at 3pm, but she texted me like... "Where are you?" and I just froze.
+
+I said, "Wait — is it 2pm already?" And she goes, "It's 2:30!" And I was like — you're telling me I'm half an hour late?! That's so unlike me.
+
+Anyway, I told her, "I'll get back to you in five minutes" — I was just buying time, honestly — and I ran out of my apartment. Made it there in like twelve minutes. She was already on her second coffee.
+
+But here's the thing — she wasn't even upset. She just said, "It's not a big deal." Which honestly made me feel worse? Like, I would have preferred if she got a little annoyed, you know?
+
+So we finally caught up, and honestly? Best conversation in months. We were totally on the same page about everything. I guess... sometimes being late leads to something good.
+
+Anyway — I'm all ears if you've got a story like that. Tell me!`,
+  speakingTips: [
+    "Miresaka amin'ny haingana voajanahary — tsy moramora, tsy faingana loatra.",
+    "Mijanona kely amin'ny comma sy ny teboka. Avelahy hifoha ny resaka.",
+    "Asio lanja ny teny ao anatin'ny quotes na teny voasongadina.",
+    "Ataovy in-telo: indray maka fahafantarana, indray fiofanana, indray fampisehoana.",
+  ],
+  quiz: [
+    { q: "Inona ny andian-teny tokony ampiasaina hilazana fa vonona mihaino ianao?", options: ["I'll take your word for it.", "I'm all ears.", "Don't quote me on this.", "Long story short."], answer: 1 },
+    { q: "Izy tiana ampiasaina tsara ny Present Perfect?", options: ["I have visited her yesterday.", "She has eaten lunch at noon.", "Have you ever tried Thai food?", "We have saw that movie last week."], answer: 2 },
+    { q: "Iza amin'ireto teny ireto no midika hoe 'falahetana avy amin'ny asa be loatra'?", options: ["Delegate", "Pitch", "Burnout", "Deadline"], answer: 2 },
+    { q: "Fenoy ny teny: 'If I _____ more time, I would learn Spanish.'", options: ["have", "had", "will have", "having"], answer: 1 },
+    { q: "Inona ny dikan'ny 'ghost' amin'ny resaka ara-tsosialy?", options: ["Mizara vaovao manokana be loatra", "Milaza angano mampatahotra", "Nitsahatra tampoka ny fifandraisana amin'ny olona", "Mihaona indray amin'ny namana taloha"], answer: 2 },
+    { q: "Iza no mendrika indrindra?", options: ["Can you close the door?", "Close the door.", "Could you close the door?", "You close the door."], answer: 2 },
+    { q: "Inona ny dikan'ny phrasal verb 'bring up'?", options: ["Mitondra zavatra any ambony", "Mitaiza ankizy", "Miresaka lohahevitra", "Manoa"], answer: 2 },
+    { q: "Inona ny andian-teny tsara indrindra mba haka fotoana mialoha ny mamaly?", options: ["That's easier said than done.", "Let me think about that for a second.", "What's the catch?", "We're on the same page."], answer: 1 },
+  ],
+};
+
+const VOCAB_MEMORY = {
+  business: {
+    label: "Asa / Business", emoji: "💼",
+    words: [
+      { word: "Leverage", def: "Mampiasa zavatra iray mba hahazoana tombony betsaka kokoa.", examples: ["\"We need to leverage our network to close this deal.\"", "\"She leveraged her experience to negotiate a higher salary.\""], trick: "🧠 Hevero ny 'lever' (basy fandanjana) — mampiasa hery kely hahazoana vokatra lehibe!" },
+      { word: "Negotiate", def: "Miresaka mba hahazoana fifanarahana tsara ho an'ny tena.", examples: ["\"They negotiated the contract for three weeks before signing.\"", "\"Always negotiate your salary — never accept the first offer.\""], trick: "🧠 'Nego' = tsia + 'tiate' = atao. Milaza tsia amin'ny voalohany mandra-pahazoana ny tianao!" },
+      { word: "Scalable", def: "Azo haavona na hahabetsahana tsy misy olana lehibe.", examples: ["\"Is your business model scalable?\"", "\"A small team can build a scalable product if the systems are right.\""], trick: "🧠 'Scale' = mizana. SCALABLE = azo asiana vato betsaka ny mizana tsy ho tapaka!" },
+      { word: "Benchmark", def: "Fetra na marika ampiasaina hitanterana ny kalitao na fahazoana.", examples: ["\"We need a benchmark to measure our progress.\"", "\"Their sales numbers became the benchmark for the whole industry.\""], trick: "🧠 'Bench' = seza + 'mark' = marika. Manisy marika eo amin'ny sezanao hahafantarana ny toeranao!" },
+      { word: "Stakeholder", def: "Olona na vondrona manan-tombony ao amin'ny orinasa na tetikasa.", examples: ["\"We must consider all stakeholders before making this decision.\"", "\"The employees are the most important stakeholders.\""], trick: "🧠 'Stake' = tsatòka + 'holder' = mpitana. Samy manana tsatòka amin'ny tany — ary samy miahy azy!" },
+      { word: "Pivot", def: "Manova ny lalana na ny strategy rehefa tsy mandeha tsara ny teo aloha.", examples: ["\"We need to pivot before we run out of money.\"", "\"Instagram started as a check-in app before pivoting to photos.\""], trick: "🧠 Toa ny mpilalao basket manodina tongotra iray — PIVOT = miodina haingana amin'ny lalan-kafa!" },
+      { word: "ROI", def: "Return On Investment — ny tombony azo raha oharina amin'ny vola nampiana.", examples: ["\"What's the ROI on this marketing campaign?\"", "\"The best ROI I ever got was investing in my own education.\""], trick: "🧠 ROI = Raha Omena Izay (vola) → Inona ny averina?" },
+      { word: "Synergy", def: "Rehefa miara-miasa ny zavatra roa mamorona vokatra lehibe noho ny samy mitokana.", examples: ["\"There's real synergy between our two teams.\"", "\"The merger created synergy that doubled their output.\""], trick: "🧠 SYN = miaraka + ENERGY = hery. SYNERGY = hery miaraka = 1+1=3!" },
+      { word: "Overhead", def: "Fandaniana maharitra amin'ny orinasa tsy mifandray mivantana amin'ny vokatra.", examples: ["\"We need to cut overhead to stay profitable.\"", "\"Working from home reduced the company's overhead significantly.\""], trick: "🧠 'Over' (ambony) + 'head' (loha). Fandaniana 'eo ambonin'ny lohanao' foana!" },
+      { word: "Disruptive", def: "Mampiova tanteraka ny fomba fanao teo aloha amin'ny sehatra iray.", examples: ["\"Uber was a disruptive force in the taxi industry.\"", "\"We're not just a startup — we're a disruptive technology company.\""], trick: "🧠 'Disrupt' = manimba ny lalan'ny olona. Toa ny zazakely ao amin'ny fivoriana lehibe!" },
+    ],
+    quiz: [
+      { q: "Inona ny dikan'ny 'Leverage'?", opts: ["Mamidy vola", "Mampiasa zavatra hahazoana tombony betsaka", "Manakarama olona", "Miresaka amin'ny mpanjifa"], a: 1 },
+      { q: "Inona ny mari-pahaizana hoe orinasa 'Scalable'?", opts: ["Lehibe loatra", "Azo haavona tsy misy olana lehibe", "Maranitra be", "Misy tamberin-karena"], a: 1 },
+      { q: "'Stakeholder' dia...", opts: ["Mpamboly", "Mpanjifa fotsiny", "Olona manan-tombony amin'ny tetikasa", "Tompon'ny trano"], a: 2 },
+      { q: "Ny orinasa 'Pivots' rehefa...", opts: ["Mahazo tombony betsaka", "Manova strategy", "Manakarama olona vaovao", "Manampy vola"], a: 1 },
+      { q: "ROI = ?", opts: ["Run Of Ideas", "Return On Investment", "Rate Of Income", "Risk Or Income"], a: 1 },
+      { q: "'Overhead' amin'ny orinasa dia...", opts: ["Tamberin-karena", "Karama ny mpitantana", "Fandaniana maharitra tsy mifandray amin'ny vokatra", "Vidim-pitaovana"], a: 2 },
+      { q: "Ny smartphone dia 'disruptive' satria...", opts: ["Lafo be", "Nanova tanteraka ny fomba fiaina", "Vita any Amerika", "Manana bateria tsara"], a: 1 },
+      { q: "'Synergy' midika hoe...", opts: ["Fifaninanana", "Miara-miasa mamorona vokatra lehibe noho ny samy mitokana", "Fandaniana", "Fampifandraisana"], a: 1 },
+      { q: "Manao ahoana ny mampiasa 'Benchmark'?", opts: ["Manenjika ny fifaninanana", "Mitsangana amin'ny seza", "Mamaritra fetra hitanterana ny kalitao", "Mampitaha vidiny"], a: 2 },
+      { q: "'Negotiate' dia tsy midika hoe...", opts: ["Miresaka hahazoana fifanarahana", "Mitaky", "Mifampizara hevitra", "Mandray ny tolotra voalohany fotsiny"], a: 3 },
+    ]
+  },
+  social: {
+    label: "Ara-tsosialy / Social", emoji: "🗣️",
+    words: [
+      { word: "Small talk", def: "Resaka fohy sy tsy dia lehibe atao amin'ny vahiny na toerana vao nidirana.", examples: ["\"I'm not good at small talk at parties.\"", "\"Weather is the classic small talk topic in England.\""], trick: "🧠 'Small' = kely + 'talk' = resaka. Resaka KELY — tsy filozofia!" },
+      { word: "Empathy", def: "Fahafahan'ny olona mahatsapa sy mahatakatra ny fihetseham-pon'ny hafa.", examples: ["\"You need empathy to be a good leader.\"", "\"She showed real empathy when her friend lost his job.\""], trick: "🧠 EM-PATHY = miditra ao amin'ny 'path' (lalana) ny hafa. Mandeha amin'ny kiraro ny hafa ianao!" },
+      { word: "Boundary", def: "Fetra apetraky ny olona amin'ny fifandraisana mba hiaro ny tenany.", examples: ["\"I need to set boundaries with my coworkers.\"", "\"Healthy relationships require clear boundaries.\""], trick: "🧠 'Bound' = fetra. BOUNDARY = tsy azo tehirizina ny hafa tsy namelana!" },
+      { word: "Networking", def: "Manorina fifandraisana amin'ny olona maro mba hahasoa ny asa na ny fiainana.", examples: ["\"She got the job through networking, not job boards.\"", "\"Networking is about building real relationships.\""], trick: "🧠 'Net' = harato. NETWORKING = manary harato mba hisambotra ny olona tsara!" },
+      { word: "Icebreaker", def: "Fanontaniana na lalao atao mba hanafoanana ny fikorontanana eo am-pihaonana vaovao.", examples: ["\"Let's do a quick icebreaker before the meeting starts.\"", "\"A good icebreaker can change the energy of the whole room.\""], trick: "🧠 'Ice' = ranomandry + 'break' = tapaka. Mampitodika ny ranomandry mba hanafanana ny toe-tsaina!" },
+      { word: "Assertive", def: "Milaza ny hevitra sy ny filan'ny tena amim-pahatokiana, tsy manahy sy tsy mahery setra.", examples: ["\"Be assertive, not aggressive.\"", "\"She was assertive enough to ask for a raise after six months.\""], trick: "🧠 'Assert' = milaza mafy. ASSERTIVE = milaza ny tenanao mazava fotsiny!" },
+      { word: "Charisma", def: "Hery voajanahary manintona olona amin'ny toetra sy fitenenana.", examples: ["\"He walked into the room and his charisma was undeniable.\"", "\"Charisma is mostly about making others feel seen.\""], trick: "🧠 Char = afo. CHARISMA = mafana toy ny afo — manintona ny olona manodidina anao!" },
+      { word: "Sarcasm", def: "Fomba fiteny milaza zavatra iray fa ny heviny tena mifanohitra — matetika mba hanadihady.", examples: ["\"Oh great, another meeting. Just what I needed.\" — sarcasm", "\"Chandler's sarcasm was his main personality trait in Friends.\""], trick: "🧠 SAR-CASM = milaza tsara fa midika ratsy. Toy ny milaza 'tsara be' amin'ny sakafo tsy ara-danja!" },
+      { word: "Vulnerable", def: "Vonona haneho ny fihetseham-po na ny fahalemena amin'ny hafa.", examples: ["\"Vulnerability is not weakness — it's courage.\"", "\"He felt vulnerable telling her how he really felt.\""], trick: "🧠 Vulnerable = manokatra ny rantsanao — mampiseho fa olona tena izy ianao!" },
+      { word: "Gossip", def: "Resaka momba ny olona hafa, matetika tsy marina na tsy tokony hasaina.", examples: ["\"The office gossip spread faster than any official announcement.\"", "\"Don't spread gossip — it damages trust.\""], trick: "🧠 GOSSIP = resaka mikoriana amin'ny tsofina rehetra!" },
+    ],
+    quiz: [
+      { q: "'Small talk' dia resaka...", opts: ["Lehibe sy lalina", "Fohy sy tsy dia lehibe amin'ny vahiny", "Amin'ny telefaona", "Momba ny politika"], a: 1 },
+      { q: "'Empathy' midika hoe...", opts: ["Mahatsiaro ny tenanao", "Mahatsapa sy mahatakatra ny fihetseham-pon'ny hafa", "Miteny mafy", "Mangataka"], a: 1 },
+      { q: "Manao 'boundary' ianao rehefa...", opts: ["Mandeha any ivelany", "Mametraka fetra amin'ny fifandraisana", "Miresaka be", "Mangataka vola"], a: 1 },
+      { q: "'Icebreaker' ampiasaina...", opts: ["Anatin'ny rano mangatsiaka", "Hanafoanana fikorontanana eo am-pihaonana", "Hamelezan'ny ranomandry", "Hamotorana zava-pisotro"], a: 1 },
+      { q: "Ny olona 'assertive' dia...", opts: ["Mahery setra sy tezitra", "Kivy foana", "Milaza ny heviny amim-pahatokiana tsy manahy", "Tsy miteny mihitsy"], a: 2 },
+      { q: "'Sarcasm' dia...", opts: ["Fety", "Milaza tsara fa ny heviny mifanohitra", "Fitenenana mora", "Fomba firesaka amin'ny ankizy"], a: 1 },
+      { q: "'Charisma' dia...", opts: ["Loko akanjo", "Hery manintona olona amin'ny toetra", "Karazana mozika", "Fanafody"], a: 1 },
+      { q: "Ny olona 'vulnerable' dia...", opts: ["Matanjaka be", "Vonona haneho fihetseham-po na fahalemena", "Tsy miraharaha", "Mandainga foana"], a: 1 },
+      { q: "'Networking' dia...", opts: ["Mampiasa internet", "Manorina fifandraisana amin'ny olona maro", "Miasa amin'ny harato", "Mitory vaovao"], a: 1 },
+      { q: "'Gossip' dia...", opts: ["Resaka lalina momba ny filozofia", "Hira anglisy", "Resaka momba ny olona hafa matetika tsy marina", "Karazana sakafo"], a: 2 },
+    ]
+  },
+  travel: {
+    label: "Dia-lalana / Travel", emoji: "✈️",
+    words: [
+      { word: "Spontaneous", def: "Atao tampoka tsy nikasika mialoha — voajanahary sy tsy voazaha toetra.", examples: ["\"Let's be spontaneous — let's go to Paris this weekend!\"", "\"The best travel memories are often the most spontaneous ones.\""], trick: "🧠 SPON-TANE-OUS = misy hery avy amin'ny ao anatiny. Atao satria tiako — tsy satria nokasaina!" },
+      { word: "Wanderlust", def: "Faniriana lehibe sy maharitra ny handeha dia sy hahita toerana vaovao.", examples: ["\"Her wanderlust took her to 50 countries before she turned 30.\"", "\"Wanderlust is not a disease — it's a lifestyle.\""], trick: "🧠 WANDER (mandeha) + LUST (faniriana mafy). Avy amin'ny Alemanina — mitia lalana!" },
+      { word: "Culture shock", def: "Fihetseham-po sahirana rehefa tonga amin'ny firenena na fomba tsy fanao.", examples: ["\"I experienced culture shock when I first moved to Japan.\"", "\"Culture shock is normal — it means you're really experiencing a new place.\""], trick: "🧠 CULTURE (fomban-drazana) + SHOCK (variana). Toa mahazo herinaratra rehefa mahita fomba tsy fanao. ⚡" },
+      { word: "Off the beaten path", def: "Toerana tsy malaza, tsy misy mpizaha tany betsaka — hita fotsiny raha mikaroka.", examples: ["\"We skipped the tourist traps and went off the beaten path.\"", "\"The best restaurants in Rome are always off the beaten path.\""], trick: "🧠 'Beaten path' = lalana efa namihina be. Miala amin'ny lalana efa namihina — mandeha amin'ny tsy fantatra!" },
+      { word: "Hostel", def: "Trano fandraisam-bahiny mora, misy efitrano miaraka amin'ny mpizaha tany hafa.", examples: ["\"We stayed at a hostel in Barcelona for 15 euros a night.\"", "\"Hostels are great for meeting other travelers from around the world.\""], trick: "🧠 HOSTEL ≠ HOSTILE (fahavalo)! Mitovy ny feo fa tsy mitovy ny heviny." },
+      { word: "Overrated", def: "Resahina ho tsara be nefa tsy mifanaraka amin'ny laza.", examples: ["\"The Eiffel Tower is overrated — the view from Montmartre is better.\"", "\"Traveling by plane is overrated. Take a train and see the countryside!\""], trick: "🧠 OVER (mihoatra) + RATED (voaomby). Nomen'ny olona ⭐⭐⭐⭐⭐ nefa ⭐⭐ fotsiny tena izy!" },
+      { word: "Budget", def: "Fetra vola nofaritana ho an'ny dia na ny fandaniana.", examples: ["\"We traveled Europe on a tight budget — 30 euros a day.\"", "\"Always set a budget before you travel or you'll regret it.\""], trick: "🧠 BUD (voankazo kely) + GET. BUDGET = hahazoana voa betsaka avy amin'ny kely!" },
+      { word: "Visa", def: "Alalana omena ny governemanta mba hahafahana miditra amin'ny fireneny.", examples: ["\"I had to apply for a visa three months in advance.\"", "\"Some countries offer visa-on-arrival, which makes travel so much easier.\""], trick: "🧠 VISA = Very Important Stamp Ahead! Ny tombo-kase lehibe indrindra alohan'ny dia!" },
+      { word: "Backpacker", def: "Mpizaha tany mandeha amin'ny vola kely, mitondra kitapo, tsy misy hotely lafo.", examples: ["\"I spent three months as a backpacker through Southeast Asia.\"", "\"The hostel was full of backpackers from all over the world.\""], trick: "🧠 BACK (lamosina) + PACKER. Mitondra ny fiainana rehetra eo am-piambohanao!" },
+      { word: "Souvenir", def: "Zavatra kely vidiana any am-pizahantany mba hampahatsiahivana ny dia.", examples: ["\"I bought a small souvenir from every country I visited.\"", "\"The best souvenirs are photos — they don't take up space in your bag!\""], trick: "🧠 Avy amin'ny frantsay 'souvenir' = mahatsiahy. Zavatra mitondra ny fiarahamonina ao am-ponao!" },
+    ],
+    quiz: [
+      { q: "Ny olona 'Spontaneous' dia...", opts: ["Mikasa tsara mialoha", "Atao tampoka tsy nikasika", "Kivy foana", "Tia matory"], a: 1 },
+      { q: "'Wanderlust' midika hoe...", opts: ["Very any an-dalana", "Faniriana lehibe handeha dia", "Kilema avy amin'ny dia", "Trano fampiasana"], a: 1 },
+      { q: "'Culture shock' dia...", opts: ["Herinaratra ara-kolontsaina", "Fihetseham-po sahirana amin'ny fomba tsy fanao", "Hiran'ny firenena", "Sakafo tsy fanao"], a: 1 },
+      { q: "'Off the beaten path' midika hoe...", opts: ["Amin'ny lalana lehibe", "Toerana tsy malaza sy tsy misy mpizaha tany betsaka", "Very any an-tsaha", "Amin'ny bus"], a: 1 },
+      { q: "HOSTEL ≠ HOSTILE. Inona ny dikan'ny 'Hostel'?", opts: ["Fahavalo", "Toerana mampatahotra", "Trano fandraisam-bahiny mora", "Fiasan'ny miaramila"], a: 2 },
+      { q: "'Overrated' midika hoe...", opts: ["Tsara be tokoa", "Resahina ho tsara nefa tsy mifanaraka amin'ny laza", "Lafo be", "Tsy malaza"], a: 1 },
+      { q: "Nahoana no ilaina ny 'Visa'?", opts: ["Mividiana eny am-pizahantany", "Alalana miditra amin'ny firenena", "Karapanondro", "Pasiporo"], a: 1 },
+      { q: "'Backpacker' dia mpizaha tany...", opts: ["Miaraka amin'ny karavana lehibe", "Mandeha amin'ny vola kely mitondra kitapo", "Miaraka amin'ny fianakaviana", "Manana hotely lafo"], a: 1 },
+      { q: "'Souvenir' ampiasaina...", opts: ["Fampahatsiahivana ny dia", "Fanafody rehefa marary", "Sakafo avy any ivelany", "Taratasy fangatahana"], a: 0 },
+      { q: "'Budget' dia...", opts: ["Vola be indrindra", "Fetra vola ho an'ny dia", "Banky", "Karatra fandoavam-bola"], a: 1 },
+    ]
+  },
+  // NEW THEME: Emotion
+  emotion: {
+    label: "Fihetseham-po / Emotion", emoji: "💛",
+    words: [
+      { word: "Overwhelmed", def: "Mahatsapa fa be loatra ny zavatra misy — tsy afaka mitantana tsara.", examples: ["\"I'm completely overwhelmed with work this week.\"", "\"She felt overwhelmed by all the decisions she had to make.\""], trick: "🧠 OVER (mihoatra) + WHELM (mandevona). Toy ny onja lehibe mianjera aminao — mandevona!" },
+      { word: "Nostalgic", def: "Mahatsapa fitiavana malaina ho an'ny lasa sy ny zavatra taloha.", examples: ["\"Looking at old photos makes me nostalgic.\"", "\"That song made him nostalgic for his college days.\""], trick: "🧠 NOSTOS (Greek = trano) + ALGOS (Greek = fanaintainana). Manaintaina ny fo rehefa misaina ny tsy miverina!" },
+      { word: "Frustrated", def: "Tezitra amim-pahanginana na very fanantenana satria tsy mandeha tsara ny zavatra.", examples: ["\"I get frustrated when my internet keeps cutting out.\"", "\"She was frustrated that nobody listened to her idea.\""], trick: "🧠 Toa ny midona amin'ny rindrina — FRUSTRATED = very hery satria voasakana foana!" },
+      { word: "Relieved", def: "Mahatsapa fiadanana rehefa vita ny zavatra nanahy anao.", examples: ["\"I was so relieved when the test results came back negative.\"", "\"He felt relieved after finally telling the truth.\""], trick: "🧠 RE (indray) + LIEVE (afaka entana). RELIEVED = napetraka ny entana teo am-ponanao!" },
+      { word: "Anxious", def: "Manahy na matahotra zavatra mbola tsy tonga, matetika tsy misy antony mazava.", examples: ["\"I always feel anxious before job interviews.\"", "\"She was anxious about moving to a new city.\""], trick: "🧠 Toa ny vonona mandositra fa tsy misy mihaza anao. ANXIOUS = matahotra ny tsy fantatra!" },
+      { word: "Content", def: "Ravoravo amim-pilaminana amin'ny fiainana ankehitriny — tsy mitady bebe kokoa.", examples: ["\"I'm content with my simple life by the sea.\"", "\"After years of searching, she finally felt content.\""], trick: "🧠 CONTENT ≠ HAPPY fotsiny. Content = miadana tsara amin'izay mananao — fiadanana lalina!" },
+      { word: "Embarrassed", def: "Mahatsapa henatra na tsy fety eo anatrehan'ny olona.", examples: ["\"I was so embarrassed when I called the teacher 'mom'.\"", "\"He turned red from embarrassment during the presentation.\""], trick: "🧠 EM-BARRASS = voasarika amin'ny barasy! Toy ny mifanena amin'ny exanao teo amin'ny fihinanana!" },
+      { word: "Jealous", def: "Mahatsapa ahi-doza na tsy fahatoniana rehefa hita ny tombony na ny fahombiazana ny hafa.", examples: ["\"She was jealous of her sister's success.\"", "\"Don't be jealous — be inspired instead!\""], trick: "🧠 JEAL = miaraka amin'ny zeal (ahi-doza). JEALOUS = ahi-doza mafy fa miorina amin'ny fanananao!" },
+      { word: "Grateful", def: "Mahatsapa fisaorana lalina ho an'ny zavatra tsara ananana na azony.", examples: ["\"I'm so grateful for my family's support.\"", "\"Being grateful daily can change your whole mindset.\""], trick: "🧠 GRATE (= tsiky) + FUL. GRATEFUL = feno tsiky ao am-po satria mahatsiahy ny tsara!" },
+      { word: "Indifferent", def: "Tsy miraharaha na tsy manana fihetseham-po manokana momba ny zavatra iray.", examples: ["\"He seemed indifferent to the outcome.\"", "\"She was indifferent to the movie — neither loved nor hated it.\""], trick: "🧠 IN (tsy) + DIFFERENT (hafa). INDIFFERENT = tsy misy heviny ho azy — mitovy ny zava-drehetra!" },
+    ],
+    quiz: [
+      { q: "'Overwhelmed' midika hoe...", opts: ["Ravoravo be", "Mahatsapa fa be loatra ny zavatra misy", "Marary", "Very"], a: 1 },
+      { q: "Ny olona 'Nostalgic' dia...", opts: ["Very any an-dalana", "Mahatsapa fitiavana malaina ho an'ny lasa", "Tsy mahatsiahy", "Tia mozika"], a: 1 },
+      { q: "'Relieved' midika hoe...", opts: ["Tezitra", "Mahatsapa fiadanana rehefa vita ny nanahy anao", "Very fanantenana", "Kivy"], a: 1 },
+      { q: "Inona ny famaritana tsara indrindra ny 'Anxious'?", opts: ["Ravoravo be", "Osa", "Manahy zavatra mbola tsy tonga", "Kivy"], a: 2 },
+      { q: "'Content' amin'ny fihetseham-po dia...", opts: ["Ravoravo mahery sy manify", "Ravoravo amim-pilaminana amin'ny fiainana ankehitriny", "Kivy ela", "Tsy miraharaha"], a: 1 },
+      { q: "Ny olona 'Embarrassed' dia...", opts: ["Mahatsapa henatra na tsy fety", "Tezitra", "Reraka", "Noana"], a: 0 },
+      { q: "'Grateful' midika hoe...", opts: ["Tezitra", "Kivy", "Mahatsapa fisaorana lalina", "Tsy ravoravo"], a: 2 },
+      { q: "'Indifferent' dia...", opts: ["Tsy miraharaha — tsy manana fihetseham-po manokana", "Mahery setra be", "Tia ny rehetra", "Matahotra"], a: 0 },
+      { q: "Ny olona 'Frustrated' dia...", opts: ["Ravoravo be", "Tezitra amim-pahanginana satria tsy mandeha ny zavatra", "Mahatsapa fiadanana", "Marary"], a: 1 },
+      { q: "'Jealous' ≠ 'Grateful'. Inona ny fahasamihafana lehibe indrindra?", opts: ["Jealous = fisaorana, Grateful = ahi-doza", "Jealous = ahi-doza amin'ny hafa, Grateful = fisaorana", "Mitovy izy roa", "Tsy misy heviny maromaro"], a: 1 },
+    ]
+  },
+};
+
+const DAYS = [1, 2, 3, 4, 5, 6, 7];
+const TABS = ["Andian-teny", "Teny", "Fitsipika", "Fitenenana", "Fanontaniana", "Resaka AI", "Teny Vaovao"];
+
+const TOPICS = [
+  { id: "day", label: "Ny androany", emoji: "☀️", desc: "How was your day?" },
+  { id: "job", label: "Ny asanao", emoji: "💼", desc: "What do you do for work?" },
+  { id: "hobby", label: "Ny firaketanao", emoji: "🎯", desc: "What are your hobbies?" },
+  { id: "travel", label: "Dia-lalana", emoji: "✈️", desc: "Tell me about a place you've been or want to visit." },
+  { id: "dream", label: "Nofinofiko", emoji: "🌙", desc: "What's your biggest dream in life?" },
+  { id: "food", label: "Sakafo tiako", emoji: "🍽️", desc: "What's your favorite food and why?" },
+];
+
+const SYSTEM_PROMPT = `You are Jordan, a friendly English-speaking partner from New York. You're meeting the user for coffee at a cozy café in Manhattan. Your job is to have a natural 10-minute conversation about one of these topics: their day, their job, their favorite hobby, travel experiences, dreams, or food.
+
+Rules:
+- Be warm, casual, and genuinely curious — like a real friend, not a teacher.
+- Ask follow-up questions to keep the conversation going naturally.
+- If the user makes a grammar mistake, gently correct it by saying: "That sounds good! Just one small thing — you could say '[correct version]' instead. But anyway, [continue the conversation naturally]."
+- If the user uses basic or simple vocabulary, suggest a more natural/advanced word by saying: "Oh nice! A word you might hear a lot here is '[better word]' — like '[example sentence]'. So [continue conversation]."
+- Never lecture. Corrections are quick and friendly, then you move on.
+- Keep responses short (2–4 sentences max) so it feels like real chat, not an essay.
+- Never break character. You are Jordan from New York.
+- Start by greeting the user warmly and introducing the topic they chose.`;
+
+// ─── COLORS ─────────────────────────────────────────────────────────────────
+const C = {
+  bg: "#0d0d0d", bg2: "#111008", bg3: "#141008", bg4: "#1c1608",
+  gold: "#c9a84c", goldDim: "#7a6a40", goldDark: "#3a2e1a",
+  border: "#2a2010", borderDim: "#1c1608",
+  text: "#f0ebe0", textSub: "#9a8c72", textDim: "#5a4e30",
+  green: "#7ab83a", greenBg: "#0f1e08", greenBorder: "#4a8a1a",
+  red: "#c04040", redBg: "#1e0808", redBorder: "#8a1a1a",
+};
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+const btn = (extra = {}) => ({
+  border: "none", borderRadius: 6, cursor: "pointer",
+  fontFamily: "sans-serif", fontWeight: "700", transition: "all 0.2s",
+  ...extra,
+});
+
+// ─── PROGRESS TRACKER ───────────────────────────────────────────────────────
+const PROGRESS_KEY = "eng_imm_progress_v1";
+const STREAK_KEY = "eng_imm_streak_v1";
+const XP_KEY = "eng_imm_xp_v1";
+
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}"); } catch { return {}; }
+}
+function saveProgress(p) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch {}
+}
+function loadStreak() {
+  try { return JSON.parse(localStorage.getItem(STREAK_KEY) || '{"count":0,"lastDate":""}'); } catch { return { count: 0, lastDate: "" }; }
+}
+function saveStreak(s) {
+  try { localStorage.setItem(STREAK_KEY, JSON.stringify(s)); } catch {}
+}
+function loadXP() {
+  try { return parseInt(localStorage.getItem(XP_KEY) || "0", 10); } catch { return 0; }
+}
+function saveXP(xp) {
+  try { localStorage.setItem(XP_KEY, String(xp)); } catch {}
+}
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// ─── GAMIFICATION ────────────────────────────────────────────────────────────
+const XP_PER_DAY = 100;
+
+const DAILY_MISSIONS = [
+  { id: "complete_lesson", label: "Complete 1 lesson",      xpReward: 50,  completed: false },
+  { id: "finish_quiz",     label: "Finish 1 quiz",          xpReward: 40,  completed: false },
+  { id: "chat_messages",   label: "Send 3 chat messages",   xpReward: 30,  completed: false },
+];
+
+const XP_REWARDS = {
+  complete_day:    100,
+  quiz_perfect:     50,
+  speaking_done:    40,
+  chat_message:     10,
+  vocab_mastered:   80,
+};
+
+const CHAT_XP_DAILY_CAP = 50;
+const CHAT_XP_KEY = "eng_imm_chat_xp_v1";
+
+function loadChatXPToday() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CHAT_XP_KEY) || "{}");
+    return saved.date === todayStr() ? (saved.total ?? 0) : 0;
+  } catch { return 0; }
+}
+function saveChatXPToday(total) {
+  try { localStorage.setItem(CHAT_XP_KEY, JSON.stringify({ date: todayStr(), total })); } catch {}
+}
+
+function canGainXP(action) {
+  if (action !== "chat_message") return true;
+  return loadChatXPToday() < CHAT_XP_DAILY_CAP;
+}
+
+function addXP(currentXP, action) {
+  if (!canGainXP(action)) return currentXP;
+  const reward = XP_REWARDS[action] ?? 0;
+  if (action === "chat_message") {
+    const chatToday = loadChatXPToday();
+    const allowed = Math.min(reward, CHAT_XP_DAILY_CAP - chatToday);
+    saveChatXPToday(chatToday + allowed);
+    return currentXP + allowed;
+  }
+  return currentXP + reward;
+}
+
+const LEVELS = [
+  { name: "Beginner",     minXP: 0,    maxXP: 99,   emoji: "🌱", color: "#6ab04c" },
+  { name: "Learner",      minXP: 100,  maxXP: 299,  emoji: "📖", color: "#f9ca24" },
+  { name: "Intermediate", minXP: 300,  maxXP: 599,  emoji: "⚡", color: "#e17055" },
+  { name: "Advanced",     minXP: 600,  maxXP: 999,  emoji: "🔥", color: "#d63031" },
+  { name: "Master",       minXP: 1000, maxXP: Infinity, emoji: "🏆", color: "#c9a84c" },
+];
+
+function getUserLevel(xp) {
+  let level = LEVELS[0];
+  for (const l of LEVELS) { if (xp >= l.minXP) level = l; }
+  return level;
+}
+
+// kept for UI internals (progress bar % to next level)
+function getLevelInfo(xp) {
+  const level = getUserLevel(xp);
+  const idx = LEVELS.indexOf(level);
+  const next = LEVELS[idx + 1] ?? null;
+  const progress = next
+    ? Math.round(((xp - level.minXP) / (next.minXP - level.minXP)) * 100)
+    : 100;
+  return { ...level, xp, next, progress };
+}
+
+function getLevelProgress(xp) {
+  const currentLevel = getUserLevel(xp);
+  const idx = LEVELS.indexOf(currentLevel);
+  const nextLevel = LEVELS[idx + 1] ?? null;
+  const progressPercent = nextLevel
+    ? Math.min(100, Math.round(((xp - currentLevel.minXP) / (nextLevel.minXP - currentLevel.minXP)) * 100))
+    : 100;
+  return { currentLevel, nextLevel, progressPercent };
+}
+
+// ─── LOCK SYSTEM ─────────────────────────────────────────────────────────────
+function isDayUnlocked(day, progress) {
+  if (day === 1) return true;
+  return progress[`day_${day - 1}_done`] === true;
+}
+
+const FEATURE_REQUIREMENTS = {
+  chat_ai:          "Learner",
+  speaking:         "Learner",
+  vocab_memory:     "Intermediate",
+  advanced_grammar: "Advanced",
+};
+
+const LEVEL_ORDER = LEVELS.map(l => l.name);
+
+function canAccessFeature(feature, levelName) {
+  const required = FEATURE_REQUIREMENTS[feature];
+  if (!required) return true;
+  return LEVEL_ORDER.indexOf(levelName) >= LEVEL_ORDER.indexOf(required);
+}
+
+// ─── MAIN APP ───────────────────────────────────────────────────────────────
+export default function App() {
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [vocabTheme, setVocabTheme] = useState("work");
+  const [flipped, setFlipped] = useState({});
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [scriptProgress, setScriptProgress] = useState(0);
+  const timerRef = useRef(null);
+  const [showPronunciation, setShowPronunciation] = useState({});
+
+  // Chat
+  const [chatTopic, setChatTopic] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [userInput, setUserInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
+
+  // Vocab memory
+  const [vmTheme, setVmTheme] = useState(null);
+  const [vmPhase, setVmPhase] = useState("learn");
+  const [vmGroup, setVmGroup] = useState(0);
+  const [vmWordIdx, setVmWordIdx] = useState(0);
+  const [vmShowTrick, setVmShowTrick] = useState(false);
+  const [vmQuizAnswers, setVmQuizAnswers] = useState({});
+  const [vmQuizSubmitted, setVmQuizSubmitted] = useState(false);
+  const [vmGroupsPassed, setVmGroupsPassed] = useState([]);
+
+  // Progress & streak
+  const [progress, setProgress] = useState(loadProgress);
+  const [streak, setStreak] = useState(loadStreak);
+  const [xp, setXp] = useState(loadXP);
+  const [lockNotice, setLockNotice] = useState("");
+  const [completionMsg, setCompletionMsg] = useState("");
+
+  // Daily missions — reset to fresh template each new day
+  const [missions, setMissions] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("eng_imm_missions_v1") || "{}");
+      return saved.date === todayStr() ? saved.missions : DAILY_MISSIONS.map(m => ({ ...m }));
+    } catch { return DAILY_MISSIONS.map(m => ({ ...m })); }
+  });
+
+  const completeMission = (id) => {
+    setMissions(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, completed: true } : m);
+      try { localStorage.setItem("eng_imm_missions_v1", JSON.stringify({ date: todayStr(), missions: updated })); } catch {}
+      return updated;
+    });
+  };
+
+  useEffect(() => { saveProgress(progress); }, [progress]);
+  useEffect(() => { saveStreak(streak); }, [streak]);
+  useEffect(() => { saveXP(xp); }, [xp]);
+
+  // Mark activity done
+  const markDone = (key) => {
+    if (progress[key]) return;
+    const newP = { ...progress, [key]: true };
+    setProgress(newP);
+    // update streak
+    const today = todayStr();
+    if (streak.lastDate !== today) {
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yStr = yesterday.toISOString().slice(0, 10);
+      const newCount = streak.lastDate === yStr ? streak.count + 1 : 1;
+      setStreak({ count: newCount, lastDate: today });
+    }
+  };
+
+  // Mark a DAY done (requires 100% quiz) — awards XP and shows unlock message
+  const markDayDone = (day) => {
+    const key = `day_${day}_done`;
+    if (progress[key]) return;
+    const newP = { ...progress, [key]: true };
+    setProgress(newP);
+    const newXp = xp + XP_PER_DAY;
+    setXp(newXp);
+    // streak update
+    const today = todayStr();
+    if (streak.lastDate !== today) {
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yStr = yesterday.toISOString().slice(0, 10);
+      const newCount = streak.lastDate === yStr ? streak.count + 1 : 1;
+      setStreak({ count: newCount, lastDate: today });
+    }
+    const nextDay = day + 1;
+    const msg = nextDay <= DAYS.length
+      ? `🎉 Andro ${day} vita! Andro ${nextDay} misokatra! +${XP_PER_DAY} XP`
+      : `🏆 Andro ${day} vita! Nahatontosa ny drafin'andro rehetra! +${XP_PER_DAY} XP`;
+    setCompletionMsg(msg);
+    setTimeout(() => setCompletionMsg(""), 4000);
+  };
+
+  useEffect(() => {
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const startChat = async (topic) => {
+    setChatTopic(topic);
+    setMessages([]);
+    setChatLoading(true);
+    markDone(`chat_${topic.id}`);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: `Let's talk about: ${topic.desc}` }],
+        }),
+      });
+      const d = await res.json();
+      const reply = d.content?.map(b => b.text || "").join("") || "Hey! Great to meet you!";
+      setMessages([
+        { role: "user", content: `[Lohahevitra: ${topic.label}]`, hidden: true },
+        { role: "assistant", content: reply },
+      ]);
+    } catch {
+      setMessages([{ role: "assistant", content: "Oops! Something went wrong. Try again?" }]);
+    }
+    setChatLoading(false);
+  };
+
+  const sendMessage = async () => {
+    if (!userInput.trim() || chatLoading) return;
+    const userMsg = { role: "user", content: userInput };
+    const currentTopic = chatTopic;
+    const historyBeforeSend = messages.filter(m => !m.hidden);
+    const newMessages = [...historyBeforeSend, userMsg];
+    setMessages(prev => [...prev, userMsg]);
+    setUserInput("");
+    setChatLoading(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: SYSTEM_PROMPT,
+          messages: [
+            { role: "user", content: `Let's talk about: ${currentTopic.desc}` },
+            { role: "assistant", content: historyBeforeSend[0]?.content || "Hey!" },
+            ...newMessages.slice(1).map(m => ({ role: m.role, content: m.content })),
+          ],
+        }),
+      });
+      const d = await res.json();
+      const reply = d.content?.map(b => b.text || "").join("") || "Interesting! Tell me more.";
+      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+    } catch {
+      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, connection issue. Try again!" }]);
+    }
+    setChatLoading(false);
+  };
+
+  const dayPhrases = data.phrases.filter(p => p.day === selectedDay);
+  const toggleFlip = (id) => setFlipped(prev => ({ ...prev, [id]: !prev[id] }));
+  const togglePron = (id) => setShowPronunciation(prev => ({ ...prev, [id]: !prev[id] }));
+  const handleQuizAnswer = (qi, ai) => { if (!quizSubmitted) setQuizAnswers(prev => ({ ...prev, [qi]: ai })); };
+  const score = quizSubmitted ? data.quiz.filter((q, i) => quizAnswers[i] === q.answer).length : 0;
+  const isPerfectScore = score === data.quiz.length;
+
+  const handlePlay = () => {
+    if (isPlaying) { clearInterval(timerRef.current); setIsPlaying(false); setScriptProgress(0); return; }
+    setIsPlaying(true); setScriptProgress(0);
+    markDone("speaking");
+    const total = 180; let elapsed = 0;
+    timerRef.current = setInterval(() => {
+      elapsed++;
+      setScriptProgress(Math.min((elapsed / total) * 100, 100));
+      if (elapsed >= total) { clearInterval(timerRef.current); setIsPlaying(false); setScriptProgress(100); }
+    }, 1000);
+  };
+
+  useEffect(() => () => clearInterval(timerRef.current), []);
+
+  const themeLabels = { work: "Asa", social: "Ara-tsosialy", travel: "Dia-lalana" };
+  const visibleMessages = messages.filter(m => !m.hidden);
+
+  // Progress summary
+  const totalActivities = 7 + 3 + 1 + 6 + 4; // days + vocab themes + speaking + chat topics + vm themes
+  const doneCount = Object.keys(progress).length;
+  const progressPct = Math.round((doneCount / totalActivities) * 100);
+  const levelInfo = getLevelInfo(xp);
+  const userLevelName = getUserLevel(xp).name;
+
+  // ── VOCAB MEMORY TAB ──────────────────────────────────────────────────────
+  const renderVocabMemory = () => {
+    if (!vmTheme) {
+      return (
+        <div>
+          <div style={{ background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 20px", marginBottom: 24 }}>
+            <div style={{ fontSize: 11, color: C.gold, fontFamily: "sans-serif", letterSpacing: "0.2em", marginBottom: 6 }}>FOMBA FIOFANANA</div>
+            <div style={{ fontSize: 13, color: C.textSub, fontFamily: "sans-serif", lineHeight: 1.7 }}>
+              Teny 10 zarazara vondrona 2 (5+5). Mianara → Quiz 100% → Vondrona manaraka. Tsy azo mihoatra raha tsy mahavita 100%!
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {Object.entries(VOCAB_MEMORY).map(([key, theme]) => {
+              const passed = progress[`vm_${key}`];
+              return (
+                <button key={key} onClick={() => { setVmTheme(key); setVmPhase("learn"); setVmGroup(0); setVmWordIdx(0); setVmShowTrick(false); setVmGroupsPassed([]); markDone(`vm_${key}`); }}
+                  style={{ background: C.bg3, border: `1px solid ${passed ? C.green : C.border}`, borderRadius: 8, padding: "20px 24px", cursor: "pointer", textAlign: "left", transition: "all 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = passed ? C.green : C.border}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{theme.emoji}</div>
+                      <div style={{ fontSize: 17, color: C.text, fontStyle: "italic", marginBottom: 2 }}>{theme.label}</div>
+                      <div style={{ fontSize: 12, color: C.textDim, fontFamily: "sans-serif" }}>Teny 10 · Quiz 2 · Voajanahary</div>
+                    </div>
+                    {passed && <div style={{ fontSize: 20 }}>✅</div>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    const theme = VOCAB_MEMORY[vmTheme];
+    const groupWords = theme.words.slice(vmGroup * 5, vmGroup * 5 + 5);
+    const groupQuiz = theme.quiz.slice(vmGroup * 5, vmGroup * 5 + 5);
+    const quizScore = groupQuiz.filter((q, i) => vmQuizAnswers[i] === q.a).length;
+
+    if (vmPhase === "learn") return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: C.gold, fontFamily: "sans-serif", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            {theme.emoji} {theme.label} — Vondrona {vmGroup + 1}/2
+          </div>
+          <button onClick={() => setVmTheme(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 4, color: C.textDim, padding: "6px 12px", fontSize: 11, fontFamily: "sans-serif", cursor: "pointer" }}>← Hiverina</button>
+        </div>
+        {/* Progress dots */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+          {groupWords.map((_, i) => (
+            <div key={i} onClick={() => { setVmWordIdx(i); setVmShowTrick(false); }} style={{ flex: 1, height: 4, borderRadius: 2, background: i === vmWordIdx ? C.gold : i < vmWordIdx ? C.goldDim : C.border, cursor: "pointer", transition: "all 0.2s" }} />
+          ))}
+        </div>
+        {/* Word card */}
+        {(() => {
+          const w = groupWords[vmWordIdx];
+          return (
+            <div style={{ background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 10, padding: "28px 24px", marginBottom: 16 }}>
+              <div style={{ fontSize: 28, color: C.text, fontStyle: "italic", marginBottom: 8 }}>{w.word}</div>
+              <div style={{ fontSize: 14, color: C.textSub, fontFamily: "sans-serif", lineHeight: 1.7, marginBottom: 16, borderLeft: `3px solid ${C.gold}`, paddingLeft: 14 }}>{w.def}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                {w.examples.map((ex, i) => (
+                  <div key={i} style={{ fontSize: 13, color: "#b0a070", fontFamily: "sans-serif", fontStyle: "italic", paddingLeft: 12, borderLeft: `2px solid ${C.border}` }}>{ex}</div>
+                ))}
+              </div>
+              <button onClick={() => setVmShowTrick(!vmShowTrick)} style={{ background: vmShowTrick ? C.bg4 : "none", border: `1px solid ${vmShowTrick ? C.gold : C.border}`, borderRadius: 6, padding: "10px 16px", color: vmShowTrick ? C.gold : C.goldDim, fontSize: 12, fontFamily: "sans-serif", cursor: "pointer", width: "100%" }}>
+                {vmShowTrick ? "🧠 " + w.trick : "💡 Hita ny trick mpanampy?"}
+              </button>
+            </div>
+          );
+        })()}
+        <div style={{ display: "flex", gap: 8 }}>
+          {vmWordIdx > 0 && (
+            <button onClick={() => { setVmWordIdx(vmWordIdx - 1); setVmShowTrick(false); }} style={{ flex: 1, background: C.bg4, border: `1px solid ${C.border}`, borderRadius: 6, padding: "12px", color: C.goldDim, fontSize: 13, fontFamily: "sans-serif", cursor: "pointer" }}>← Teo aloha</button>
+          )}
+          {vmWordIdx < groupWords.length - 1 ? (
+            <button onClick={() => { setVmWordIdx(vmWordIdx + 1); setVmShowTrick(false); }} style={{ flex: 2, background: C.gold, border: "none", borderRadius: 6, padding: "12px", color: "#0d0d0d", fontSize: 13, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer" }}>Manaraka →</button>
+          ) : (
+            <button onClick={() => { setVmPhase("quiz"); setVmQuizAnswers({}); setVmQuizSubmitted(false); }} style={{ flex: 2, background: C.gold, border: "none", borderRadius: 6, padding: "12px", color: "#0d0d0d", fontSize: 13, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer" }}>📝 Quiz izao!</button>
+          )}
+        </div>
+      </div>
+    );
+
+    if (vmPhase === "quiz") return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: C.gold, fontFamily: "sans-serif", letterSpacing: "0.2em", textTransform: "uppercase" }}>📝 Quiz — Vondrona {vmGroup + 1}/2</div>
+          <button onClick={() => setVmPhase("learn")} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 4, color: C.textDim, padding: "6px 12px", fontSize: 11, fontFamily: "sans-serif", cursor: "pointer" }}>← Teny</button>
+        </div>
+        {!vmQuizSubmitted ? (
+          <div>
+            <p style={{ color: C.textSub, fontSize: 13, margin: "0 0 16px", fontFamily: "sans-serif" }}>Valío ny fanontaniana {groupQuiz.length} — tsy misy fijery! 👀</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {groupQuiz.map((q, qi) => (
+                <div key={qi} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px" }}>
+                  <div style={{ fontSize: 11, color: C.textDim, fontFamily: "sans-serif", marginBottom: 8 }}>F{qi + 1}</div>
+                  <div style={{ fontSize: 14, color: C.text, marginBottom: 12, lineHeight: 1.5 }}>{q.q}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {q.opts.map((opt, ai) => (
+                      <button key={ai} onClick={() => setVmQuizAnswers(prev => ({ ...prev, [qi]: ai }))} style={{ background: vmQuizAnswers[qi] === ai ? C.bg4 : C.bg, border: `1px solid ${vmQuizAnswers[qi] === ai ? C.gold : C.border}`, borderRadius: 5, padding: "10px 14px", color: vmQuizAnswers[qi] === ai ? "#f5e8c0" : C.goldDim, textAlign: "left", cursor: "pointer", fontSize: 13, fontFamily: "sans-serif", transition: "all 0.15s" }}>{opt}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => { if (Object.keys(vmQuizAnswers).length === groupQuiz.length) setVmQuizSubmitted(true); }} style={{ marginTop: 16, width: "100%", padding: "14px", background: Object.keys(vmQuizAnswers).length === groupQuiz.length ? C.gold : C.bg4, color: Object.keys(vmQuizAnswers).length === groupQuiz.length ? "#0d0d0d" : "#3a2e1a", border: "none", borderRadius: 6, fontSize: 13, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.2s" }}>
+              {Object.keys(vmQuizAnswers).length < groupQuiz.length ? `Valío ny ${groupQuiz.length} rehetra aloha` : "ALEFASO NY VALINY"}
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+              {groupQuiz.map((q, qi) => {
+                const correct = vmQuizAnswers[qi] === q.a;
+                return (
+                  <div key={qi} style={{ background: correct ? C.greenBg : C.redBg, border: `1px solid ${correct ? C.greenBorder : C.redBorder}`, borderRadius: 8, padding: "14px 16px" }}>
+                    <div style={{ fontSize: 13, color: correct ? C.green : C.red, fontFamily: "sans-serif", marginBottom: 6 }}>{correct ? "✓ Marina" : "✗ Diso"}</div>
+                    <div style={{ fontSize: 13, color: "#d4c898", fontFamily: "sans-serif", marginBottom: 4 }}>{q.q}</div>
+                    {!correct && <div style={{ fontSize: 12, color: C.green, fontFamily: "sans-serif" }}>Valiny marina: {q.opts[q.a]}</div>}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ background: C.bg4, border: `1px solid ${quizScore === groupQuiz.length ? C.gold : C.redBorder}`, borderRadius: 8, padding: "20px", textAlign: "center" }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>{quizScore === groupQuiz.length ? "🌟" : quizScore >= 4 ? "💪" : "📖"}</div>
+              <div style={{ fontSize: 24, color: C.gold, fontStyle: "italic", marginBottom: 8 }}>{quizScore} / {groupQuiz.length}</div>
+              {quizScore === groupQuiz.length ? (
+                <div>
+                  <div style={{ fontSize: 13, color: C.textSub, fontFamily: "sans-serif", marginBottom: 16 }}>
+                    {vmGroup === 0 ? "Vondrona voalohany vita! Eo ny faharoa." : "🎉 Vondrona rehetra vita! Mahay anao be!"}
+                  </div>
+                  {vmGroup === 0 ? (
+                    <button onClick={() => { setVmGroup(1); setVmPhase("learn"); setVmWordIdx(0); setVmShowTrick(false); setVmGroupsPassed([0]); }} style={{ background: C.gold, border: "none", borderRadius: 6, padding: "12px 24px", color: "#0d0d0d", fontSize: 13, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer" }}>Vondrona faharoa →</button>
+                  ) : (
+                    <button onClick={() => { markDone(`vm_${vmTheme}_done`); setVmTheme(null); }} style={{ background: C.gold, border: "none", borderRadius: 6, padding: "12px 24px", color: "#0d0d0d", fontSize: 13, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer" }}>🏆 Vita tanteraka!</button>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 13, color: C.textSub, fontFamily: "sans-serif", marginBottom: 16 }}>Mila 100% ianao — miverina mianatra kely!</div>
+                  <button onClick={() => { setVmPhase("learn"); setVmWordIdx(0); setVmShowTrick(false); setVmQuizAnswers({}); setVmQuizSubmitted(false); }} style={{ background: C.bg4, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "12px 24px", color: C.gold, fontSize: 13, fontFamily: "sans-serif", cursor: "pointer" }}>← Miverina mianatra</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ─── FEATURE LOCK OVERLAY ────────────────────────────────────────────────
+  const FeatureLock = ({ feature, children }) => {
+    if (canAccessFeature(feature, userLevelName)) return children;
+    const requiredLevel = FEATURE_REQUIREMENTS[feature];
+    return (
+      <div style={{ position: "relative" }}>
+        <div style={{ filter: "blur(3px)", pointerEvents: "none", userSelect: "none", opacity: 0.4 }}>
+          {children}
+        </div>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <div style={{ background: C.bg4, border: `1px solid ${C.goldDark}`, borderRadius: 10, padding: "18px 28px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+            <div style={{ fontSize: 14, color: C.gold, fontFamily: "sans-serif", fontWeight: "700" }}>
+              Unlock at {requiredLevel}
+            </div>
+            <div style={{ fontSize: 12, color: C.textDim, fontFamily: "sans-serif", marginTop: 4 }}>
+              Earn more XP to access this feature
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Georgia', 'Times New Roman', serif", color: C.text, padding: 0 }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #0d0d0d 60%)", borderBottom: `1px solid ${C.goldDark}`, padding: "24px 16px 18px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -60, right: -60, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,170,60,0.12) 0%, transparent 70%)" }} />
+        <div style={{ maxWidth: 720, margin: "0 auto", position: "relative" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase", marginBottom: 10, fontFamily: "sans-serif" }}>Mpampianatra Fiteny Manokana</div>
+              <h1 style={{ fontSize: "clamp(22px, 5vw, 34px)", fontWeight: "normal", margin: "0 0 6px", lineHeight: 1.2, color: "#f5e8c0", fontStyle: "italic" }}>Drafin'andro 7 — Fianarana Anglisy</h1>
+              <p style={{ color: C.textSub, margin: "0 0 8px", fontSize: 14, fontFamily: "sans-serif" }}>Fiteny tena izy. Resaka voajanahary. Tsy boky fianarana.</p>
+              {/* Level badge */}
+              {(() => {
+                const lvl = getUserLevel(xp);
+                return (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: C.bg4, border: `1px solid ${C.goldDark}`, borderRadius: 20, padding: "4px 12px" }}>
+                    <span style={{ fontSize: 14 }}>{lvl.emoji}</span>
+                    <span style={{ fontSize: 11, color: lvl.color, fontFamily: "sans-serif", fontWeight: "700" }}>{lvl.name}</span>
+                    <span style={{ fontSize: 11, color: C.textDim, fontFamily: "sans-serif" }}>· {xp} XP</span>
+                  </div>
+                );
+              })()}
+            </div>
+            {/* Streak badge */}
+            <div style={{ background: C.bg4, border: `1px solid ${C.gold}`, borderRadius: 10, padding: "10px 14px", textAlign: "center", flexShrink: 0 }}>
+              <div style={{ fontSize: 22 }}>🔥</div>
+              <div style={{ fontSize: 18, color: C.gold, fontWeight: "700", fontFamily: "sans-serif" }}>{streak.count}</div>
+              <div style={{ fontSize: 10, color: C.textDim, fontFamily: "sans-serif", letterSpacing: "0.1em" }}>ANDRO</div>
+            </div>
+          </div>
+          {/* XP level progress bar */}
+          {(() => {
+            const { currentLevel, nextLevel, progressPercent } = getLevelProgress(xp);
+            return (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 11, color: C.textDim, fontFamily: "sans-serif" }}>
+                    {nextLevel ? `→ ${nextLevel.name} amin'ny ${nextLevel.minXP} XP` : "Tonga lafatra!"}
+                  </span>
+                  <span style={{ fontSize: 11, color: currentLevel.color, fontFamily: "sans-serif" }}>{progressPercent}%</span>
+                </div>
+                <div style={{ height: 6, background: C.border, borderRadius: 3 }}>
+                  <div style={{ height: "100%", background: currentLevel.color, borderRadius: 3, width: `${progressPercent}%`, transition: "width 0.7s ease" }} />
+                </div>
+              </div>
+            );
+          })()}
+          {/* Overall progress */}
+          <div style={{ marginTop: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 11, color: C.textDim, fontFamily: "sans-serif" }}>Fahatongavan'ny dingana</span>
+              <span style={{ fontSize: 11, color: C.gold, fontFamily: "sans-serif" }}>{progressPct}%</span>
+            </div>
+            <div style={{ height: 4, background: C.border, borderRadius: 2 }}>
+              <div style={{ height: "100%", background: `linear-gradient(90deg, ${C.gold}, #e8c86a)`, borderRadius: 2, width: `${progressPct}%`, transition: "width 0.5s" }} />
+            </div>
+          </div>
+          {/* Toast messages */}
+          {completionMsg && (
+            <div style={{ marginTop: 12, background: "#0f1e08", border: `1px solid ${C.green}`, borderRadius: 8, padding: "12px 16px", fontSize: 13, color: C.green, fontFamily: "sans-serif", fontWeight: "700", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
+              {completionMsg}
+            </div>
+          )}
+          {lockNotice && (
+            <div style={{ marginTop: 12, background: "#1e0a08", border: "1px solid #8a2a1a", borderRadius: 8, padding: "12px 16px", fontSize: 13, color: "#c05040", fontFamily: "sans-serif", fontWeight: "700", textAlign: "center" }}>
+              {lockNotice}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── TABS ── */}
+      <div style={{ background: C.bg2, borderBottom: `1px solid ${C.border}`, padding: "10px 16px" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5 }}>
+          {TABS.map((tab, i) => (
+            <button key={tab} onClick={() => setActiveTab(i)} style={{
+              background: activeTab === i ? C.bg4 : "none",
+              border: `1px solid ${activeTab === i ? C.gold : C.border}`,
+              borderRadius: 6, cursor: "pointer", padding: "8px 4px",
+              fontSize: 10, fontFamily: "sans-serif",
+              color: activeTab === i ? C.gold : C.goldDim,
+              transition: "all 0.2s", fontWeight: activeTab === i ? "700" : "400",
+              whiteSpace: "nowrap", textAlign: "center",
+            }}>{tab}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 80px" }}>
+
+        {/* ── TAB 0: PHRASES ── */}
+        {activeTab === 0 && (
+          <div>
+            <p style={{ color: C.textSub, fontSize: 14, margin: "0 0 20px", fontFamily: "sans-serif" }}>
+              Andian-teny 20 zarazara amin'ny andro 7. Tsindrio ny karatra hahazoana ny fampiasana + feo.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+              {DAYS.map(d => {
+                const unlocked = isDayUnlocked(d, progress);
+                const done = progress[`day_${d}_done`];
+                const active = selectedDay === d;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      if (!unlocked) {
+                        setLockNotice(`🔒 Tsy maintsy vitanao ny Andro ${d - 1} aloha.`);
+                        setTimeout(() => setLockNotice(""), 3000);
+                        return;
+                      }
+                      setSelectedDay(d);
+                      markDone(`day_${d}_visited`);
+                    }}
+                    style={{
+                      padding: "8px 14px", borderRadius: 4,
+                      background: active ? C.gold : done ? "#1a1e08" : unlocked ? C.bg4 : "#110a0a",
+                      color: active ? "#0d0d0d" : done ? C.green : unlocked ? C.goldDim : "#4a2a2a",
+                      border: `1px solid ${active ? C.gold : done ? C.greenBorder : unlocked ? C.border : "#3a1a1a"}`,
+                      cursor: unlocked ? "pointer" : "not-allowed",
+                      fontSize: 12, fontFamily: "sans-serif",
+                      fontWeight: active ? "700" : "400",
+                      opacity: unlocked ? 1 : 0.45,
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {done && !active ? "✓ " : !unlocked ? "🔒 " : ""}Andro {d}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {dayPhrases.map(p => (
+                <div key={p.id} style={{ background: flipped[p.id] ? C.bg4 : C.bg3, border: `1px solid ${flipped[p.id] ? C.gold : C.border}`, borderRadius: 8, padding: "18px 22px", cursor: "pointer", transition: "all 0.25s" }}>
+                  <div onClick={() => toggleFlip(p.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 18, color: "#f5e8c0", fontStyle: "italic", marginBottom: flipped[p.id] ? 10 : 0 }}>"{p.phrase}"</div>
+                      {flipped[p.id] && (
+                        <div style={{ fontSize: 13, color: C.textSub, fontFamily: "sans-serif", lineHeight: 1.5, borderLeft: `2px solid ${C.gold}`, paddingLeft: 12, marginBottom: 10 }}>{p.use}</div>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 18, color: C.goldDark, marginLeft: 16, flexShrink: 0, transition: "transform 0.2s", transform: flipped[p.id] ? "rotate(45deg)" : "rotate(0deg)" }}>⊕</span>
+                  </div>
+                  {/* Pronunciation toggle */}
+                  {flipped[p.id] && (
+                    <button onClick={(e) => { e.stopPropagation(); togglePron(p.id); }} style={{ background: showPronunciation[p.id] ? C.bg : "none", border: `1px solid ${showPronunciation[p.id] ? C.gold : C.border}`, borderRadius: 4, padding: "6px 12px", color: showPronunciation[p.id] ? C.gold : C.textDim, fontSize: 11, fontFamily: "sans-serif", cursor: "pointer", marginTop: 4 }}>
+                      🔊 {showPronunciation[p.id] ? p.pronunciation : "Jereo ny feo"}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 1: VOCAB ── */}
+        {activeTab === 1 && (
+          <div>
+            <p style={{ color: C.textSub, fontSize: 14, margin: "0 0 20px", fontFamily: "sans-serif" }}>Teny 15 zarazara araka ny lohahevitra. Tsindrio ny karatra hahitana ohatra.</p>
+            <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+              {["work", "social", "travel"].map(theme => (
+                <button key={theme} onClick={() => { setVocabTheme(theme); markDone(`vocab_${theme}`); }} style={{
+                  padding: "8px 18px", borderRadius: 4,
+                  background: vocabTheme === theme ? C.gold : C.bg4,
+                  color: vocabTheme === theme ? "#0d0d0d" : C.goldDim,
+                  border: `1px solid ${vocabTheme === theme ? C.gold : C.border}`,
+                  cursor: "pointer", fontSize: 13, fontFamily: "sans-serif",
+                  fontWeight: vocabTheme === theme ? "700" : "400", transition: "all 0.2s",
+                }}>{themeLabels[theme]}</button>
+              ))}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {data.vocabulary[vocabTheme].map((v, i) => (
+                <div key={i} onClick={() => toggleFlip(`v-${vocabTheme}-${i}`)} style={{ background: flipped[`v-${vocabTheme}-${i}`] ? C.bg4 : C.bg3, border: `1px solid ${flipped[`v-${vocabTheme}-${i}`] ? C.gold : C.border}`, borderRadius: 8, padding: "18px 22px", cursor: "pointer", transition: "all 0.2s" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 19, color: C.text, fontStyle: "italic" }}>{v.word}</div>
+                      <div style={{ fontSize: 13, color: C.textDim, fontFamily: "sans-serif", marginTop: 2 }}>{v.meaning}</div>
+                      {flipped[`v-${vocabTheme}-${i}`] && (
+                        <div style={{ marginTop: 12, fontSize: 14, color: "#b0a070", fontFamily: "sans-serif", fontStyle: "italic", borderLeft: `2px solid ${C.gold}`, paddingLeft: 12 }}>"{v.example}"</div>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 18, color: C.goldDark, marginLeft: 16, transform: flipped[`v-${vocabTheme}-${i}`] ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⊕</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 2: GRAMMAR ── */}
+        {activeTab === 2 && (
+          <FeatureLock feature="advanced_grammar">
+          <div>
+            <p style={{ color: C.textSub, fontSize: 14, margin: "0 0 24px", fontFamily: "sans-serif" }}>Fitsipika 5 hanampiana anao hiteny voajanahary.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {data.grammar.map((g, i) => (
+                <div key={i} style={{ background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 8, padding: "22px 24px" }}>
+                  <div style={{ fontSize: 11, fontFamily: "sans-serif", letterSpacing: "0.2em", color: C.gold, textTransform: "uppercase", marginBottom: 8 }}>Fitsipika {i + 1}</div>
+                  <div style={{ fontSize: 18, color: C.text, fontStyle: "italic", marginBottom: 12 }}>{g.point}</div>
+                  <div style={{ fontSize: 13, color: C.textSub, fontFamily: "sans-serif", marginBottom: 16, lineHeight: 1.6, padding: "10px 14px", background: C.bg, borderRadius: 4 }}>💡 {g.rule}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {g.examples.map((ex, j) => (
+                      <div key={j} style={{ fontSize: 13, color: "#b0a070", fontFamily: "sans-serif", fontStyle: "italic", paddingLeft: 14, borderLeft: `2px solid ${C.border}` }}>{ex}</div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          </FeatureLock>
+        )}
+
+        {/* ── TAB 3: SPEAKING ── */}
+        {activeTab === 3 && (
+          <FeatureLock feature="speaking">
+          <div>
+            <p style={{ color: C.textSub, fontSize: 14, margin: "0 0 8px", fontFamily: "sans-serif" }}>Vakio amin'ny feo mafy io andian-teny 3 minitra io. Reko ny tenanao, avy eo mihainoa!</p>
+            <p style={{ color: C.textDim, fontSize: 13, margin: "0 0 24px", fontFamily: "sans-serif" }}>Izany no fiofanana tena izy.</p>
+            <div style={{ background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 8, padding: "24px", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontFamily: "sans-serif", letterSpacing: "0.2em", color: C.gold, textTransform: "uppercase" }}>Fiofanana — 3 Minitra</div>
+                <button onClick={handlePlay} style={{ background: isPlaying ? C.bg2 : C.gold, color: isPlaying ? C.gold : "#0d0d0d", border: `1px solid ${isPlaying ? C.gold : "transparent"}`, borderRadius: 4, padding: "8px 18px", fontSize: 12, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer" }}>
+                  {isPlaying ? "⏹ AJANONA" : "▶ ATOMBOHY"}
+                </button>
+              </div>
+              {(isPlaying || scriptProgress > 0) && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ height: 4, background: C.bg4, borderRadius: 2, overflow: "hidden" }}>
+                    <div style={{ height: "100%", background: C.gold, borderRadius: 2, width: `${scriptProgress}%`, transition: "width 0.5s" }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: C.textDim, fontFamily: "sans-serif", marginTop: 6 }}>
+                    {scriptProgress < 100 ? `${Math.round(scriptProgress * 1.8)}s` : "✓ Vita! Ahoana ny fihevitrao?"}
+                  </div>
+                </div>
+              )}
+              <div style={{ fontSize: 15, color: "#d4c898", lineHeight: 1.9, fontStyle: "italic", whiteSpace: "pre-wrap" }}>{data.speakingScript}</div>
+            </div>
+            <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, padding: "16px 20px" }}>
+              <div style={{ fontSize: 12, color: C.gold, fontFamily: "sans-serif", marginBottom: 8, letterSpacing: "0.1em" }}>TOROLALANA</div>
+              {data.speakingTips.map((tip, i) => (
+                <div key={i} style={{ fontSize: 13, color: C.goldDim, fontFamily: "sans-serif", padding: "5px 0", borderBottom: i < data.speakingTips.length - 1 ? `1px solid ${C.borderDim}` : "none" }}>
+                  {i + 1}. {tip}
+                </div>
+              ))}
+            </div>
+          </div>
+          </FeatureLock>
+        )}
+
+        {/* ── TAB 4: QUIZ ── */}
+        {activeTab === 4 && (
+          <div>
+            <p style={{ color: C.textSub, fontSize: 14, margin: "0 0 24px", fontFamily: "sans-serif" }}>Fanontaniana 8. Aza mitazana ny fanamarinana. Jereo izay niditra an-tsaina.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {data.quiz.map((q, qi) => (
+                <div key={qi} style={{ background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 22px" }}>
+                  <div style={{ fontSize: 11, color: C.textDim, fontFamily: "sans-serif", letterSpacing: "0.15em", marginBottom: 10 }}>F{qi + 1}</div>
+                  <div style={{ fontSize: 15, color: C.text, marginBottom: 14, lineHeight: 1.5 }}>{q.q}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {q.options.map((opt, ai) => {
+                      const selected = quizAnswers[qi] === ai;
+                      const correct = quizSubmitted && ai === q.answer;
+                      const wrong = quizSubmitted && selected && ai !== q.answer;
+                      return (
+                        <button key={ai} onClick={() => handleQuizAnswer(qi, ai)} style={{
+                          background: correct ? C.greenBg : wrong ? C.redBg : selected ? C.bg4 : C.bg,
+                          border: `1px solid ${correct ? C.greenBorder : wrong ? C.redBorder : selected ? C.gold : C.border}`,
+                          borderRadius: 5, padding: "11px 16px",
+                          color: correct ? C.green : wrong ? C.red : selected ? "#f5e8c0" : C.goldDim,
+                          textAlign: "left", cursor: quizSubmitted ? "default" : "pointer",
+                          fontSize: 13, fontFamily: "sans-serif", transition: "all 0.15s",
+                        }}>
+                          {correct && "✓ "}{wrong && "✗ "}{opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {!quizSubmitted ? (
+              <button onClick={() => { if (Object.keys(quizAnswers).length === data.quiz.length) { setQuizSubmitted(true); markDone("quiz_main"); } }} style={{ marginTop: 24, width: "100%", padding: "16px", background: Object.keys(quizAnswers).length === data.quiz.length ? C.gold : C.bg4, color: Object.keys(quizAnswers).length === data.quiz.length ? "#0d0d0d" : "#3a2e1a", border: "none", borderRadius: 6, fontSize: 14, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.2s" }}>
+                {Object.keys(quizAnswers).length < data.quiz.length ? `Valío ny fanontaniana ${data.quiz.length} rehetra aloha` : "ALEFASO NY VALINY"}
+              </button>
+            ) : (
+              <div style={{ marginTop: 24, background: isPerfectScore ? "#0f1e08" : C.bg4, border: `1px solid ${isPerfectScore ? C.green : C.gold}`, borderRadius: 8, padding: "24px", textAlign: "center" }}>
+                <div style={{ fontSize: 42, marginBottom: 8 }}>{isPerfectScore ? "🌟" : score >= 5 ? "💪" : "📖"}</div>
+                <div style={{ fontSize: 28, color: isPerfectScore ? C.green : C.gold, fontStyle: "italic", marginBottom: 6 }}>{score} / {data.quiz.length}</div>
+                {isPerfectScore ? (
+                  <div>
+                    <div style={{ fontSize: 14, color: C.green, fontFamily: "sans-serif", marginBottom: 16 }}>
+                      Tonga lafatra! Misokatra ny andro manaraka! +{XP_PER_DAY} XP 🎉
+                    </div>
+                    <button onClick={() => {
+                      // Award for current day based on quiz (uses day 1 as the main quiz represents day content)
+                      // Find first incomplete day to award — or use selectedDay if you tie quiz to day
+                      const firstIncomplete = DAYS.find(d => isDayUnlocked(d, progress) && !progress[`day_${d}_done`]);
+                      if (firstIncomplete) markDayDone(firstIncomplete);
+                      setQuizSubmitted(false); setQuizAnswers({});
+                    }} style={{ background: C.green, border: "none", borderRadius: 6, padding: "10px 24px", color: "#0d0d0d", fontSize: 13, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer" }}>
+                      🏅 Hanaiky ny latsaka
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 14, color: C.textSub, fontFamily: "sans-serif", marginBottom: 16 }}>
+                      Mila 100% ianao mba hahazo ny andro manaraka. Andramo indray!
+                    </div>
+                    <button onClick={() => { setQuizSubmitted(false); setQuizAnswers({}); }} style={{ marginTop: 0, background: "none", border: `1px solid ${C.border}`, color: C.goldDim, padding: "8px 20px", borderRadius: 4, fontSize: 12, fontFamily: "sans-serif", cursor: "pointer" }}>Andramo indray</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB 5: AI CHAT ── */}
+        {activeTab === 5 && (
+          <FeatureLock feature="chat_ai">
+          <div>
+            {!chatTopic ? (
+              <div>
+                <p style={{ color: C.textSub, fontSize: 14, margin: "0 0 8px", fontFamily: "sans-serif" }}>Miresaka anglisy mivantana amin'i Jordan avy any New York. Raha diso ny fitsipika, hisy fanitsiana malefaka.</p>
+                <p style={{ color: C.textDim, fontSize: 13, margin: "0 0 24px", fontFamily: "sans-serif" }}>Safidio ny lohahevitra — 6 amin'izao!</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {TOPICS.map(topic => (
+                    <button key={topic.id} onClick={() => startChat(topic)} style={{ background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 16px", cursor: "pointer", textAlign: "left", transition: "all 0.2s" }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+                    >
+                      <div style={{ fontSize: 22, marginBottom: 6 }}>{topic.emoji}</div>
+                      <div style={{ fontSize: 15, color: C.text, fontStyle: "italic", marginBottom: 4 }}>{topic.label}</div>
+                      <div style={{ fontSize: 11, color: C.textDim, fontFamily: "sans-serif" }}>{topic.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: C.gold, fontFamily: "sans-serif", letterSpacing: "0.2em", textTransform: "uppercase" }}>Resaka amin'i Jordan — {chatTopic.emoji} {chatTopic.label}</div>
+                    <div style={{ fontSize: 12, color: C.textDim, fontFamily: "sans-serif", marginTop: 3 }}>Mpiteny anglisy avy any New York · Manakarama kafe</div>
+                  </div>
+                  <button onClick={() => { setChatTopic(null); setMessages([]); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 4, color: C.textDim, padding: "6px 14px", fontSize: 11, fontFamily: "sans-serif", cursor: "pointer" }}>← Hiverina</button>
+                </div>
+                <div style={{ background: "#090905", border: `1px solid ${C.borderDim}`, borderRadius: 6, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: C.textDim, fontFamily: "sans-serif" }}>
+                  💡 Raha diso ny fitsipika, holazain'i Jordan hoe <span style={{ color: C.gold }}>"That sounds good! Just one small thing…"</span>
+                </div>
+                <div style={{ background: "#0a0a05", border: `1px solid ${C.borderDim}`, borderRadius: 8, padding: "16px", minHeight: 300, maxHeight: 400, overflowY: "auto", marginBottom: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+                  {visibleMessages.length === 0 && chatLoading && (
+                    <div style={{ color: C.textDim, fontFamily: "sans-serif", fontSize: 13, fontStyle: "italic" }}>Jordan dia miomana… ☕</div>
+                  )}
+                  {visibleMessages.map((msg, i) => (
+                    <div key={i} style={{ display: "flex", flexDirection: msg.role === "user" ? "row-reverse" : "row", gap: 10, alignItems: "flex-end" }}>
+                      {msg.role === "assistant" && (
+                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.bg4, border: `1px solid ${C.goldDark}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>☕</div>
+                      )}
+                      <div style={{ maxWidth: "78%", padding: "11px 15px", borderRadius: 10, background: msg.role === "user" ? C.bg4 : C.bg3, border: `1px solid ${msg.role === "user" ? C.gold : C.border}`, fontSize: 14, color: msg.role === "user" ? "#f5e8c0" : "#d4c898", fontFamily: "sans-serif", lineHeight: 1.6 }}>
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {chatLoading && visibleMessages.length > 0 && (
+                    <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.bg4, border: `1px solid ${C.goldDark}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>☕</div>
+                      <div style={{ padding: "12px 16px", borderRadius: 10, background: C.bg3, border: `1px solid ${C.border}`, fontSize: 14, color: C.textSub, fontFamily: "sans-serif", fontStyle: "italic" }}>Jordan dia manoratra…</div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input value={userInput} onChange={e => setUserInput(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                    placeholder="Soraty ny valiny eto…"
+                    style={{ flex: 1, background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 6, padding: "12px 16px", color: C.text, fontSize: 14, fontFamily: "sans-serif", outline: "none" }}
+                  />
+                  <button onClick={sendMessage} disabled={chatLoading || !userInput.trim()} style={{ background: userInput.trim() && !chatLoading ? C.gold : C.bg4, color: userInput.trim() && !chatLoading ? "#0d0d0d" : C.textDim, border: "none", borderRadius: 6, padding: "12px 20px", fontSize: 13, fontFamily: "sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.2s" }}>
+                    {chatLoading ? "…" : "↑"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          </FeatureLock>
+        )}
+
+        {/* ── TAB 6: VOCAB MEMORY (TENY VAOVAO) ── */}
+        {activeTab === 6 && <FeatureLock feature="vocab_memory">{renderVocabMemory()}</FeatureLock>}
+
+      </div>
+    </div>
+  );
+}
